@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cipa-fraud"
+version = "0.1.0"
+description = "Ejecucion end-to-end del framework CIPA sobre datasets de fraude digital y estudio comparativo (IIMAS-UNAM)"
+requires-python = ">=3.11"
+authors = [{ name = "Luis Garcia Rodriguez" }]
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "pandas>=2.0",
+    "pyarrow>=15",
+    "polars>=1.0",
+    "matplotlib",
+    "typer>=0.12",
+    "pydantic>=2",
+    # cipa se instala aparte como editable local:
+    #   pip install -e /home/luisgarcia/projects/unam/dcic/2026-2/statistical_analysis
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+cipa-fraud = "cipa_fraud.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+src = ["src"]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = [
+    "E501",    # line too long
+    "N803",    # X, N, IR son nombres matematicos de la API
+    "N806",
+    "RUF001",  # unicode "ambiguo" en identificadores
+    "RUF002",  # unicode "ambiguo" en docstrings: -, x, rho son tipografia
+    "RUF003",  #   intencional (espanol/matematicas), no errores.
+    "UP042",   # `str, Enum` es intencional (serializacion pydantic, igual que hermanos)
+]

@@ -1,0 +1,86 @@
+##############################################################################
+# .gitignore — CIPA_FRAUD: ejecución de CIPA sobre datasets de fraude (IIMAS-UNAM)
+#
+# Política general:
+#   - Se versiona el CÓDIGO (src/), la CONFIGURACIÓN (pyproject, lock) y la
+#     DOCUMENTACIÓN (PLAN.md, README.md, CLAUDE.md).
+#   - Se versionan los RESULTADOS CONSOLIDADOS y los REPORTES finales (tablas,
+#     figuras, informe comparativo), pero NO los JSON por corrida (regenerables).
+#   - NO se versionan los DATOS (nunca se copian aquí), los ENTORNOS ni las
+#     CACHÉS/BINARIOS de desarrollo.
+#   Cada bloque abajo explica el porqué.
+##############################################################################
+
+
+# =============================================================================
+# 1. Datos  —  este proyecto NUNCA copia datos: los lee in situ del proyecto
+#    comparativo (settings.PROCESSED_ROOT). data/ no debería existir; se ignora
+#    por si algún script escribe algo local por error.
+# =============================================================================
+/data/
+
+
+# =============================================================================
+# 2. Resultados por corrida  —  results/<id>/<layer>/<N>.json son salidas
+#    regenerables por CLI (`cipa-fraud run-all`). El consolidado tidy
+#    (results/all_results.parquet) y los reportes SÍ se versionan.
+#    Se conserva la carpeta con .gitkeep.
+# =============================================================================
+/results/**/*.json
+!/results/.gitkeep
+
+
+# =============================================================================
+# 3. Entornos virtuales y gestores  —  específicos de la máquina.
+#    El entorno se recrea con: python -m venv .venv && pip install -e . y
+#    pip install -e <ruta CIPA> (versiones exactas en requirements-lock.txt).
+# =============================================================================
+.venv/
+venv/
+env/
+.python-version
+
+
+# =============================================================================
+# 4. Artefactos de Python  —  caché de bytecode y metadatos de build/instalación.
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+
+# =============================================================================
+# 5. Logs  —  salidas de ejecución por lotes; no aportan al historial.
+# =============================================================================
+*.log
+
+
+# =============================================================================
+# 6. Herramientas de desarrollo  —  cachés de test, lint y tipado.
+# =============================================================================
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+
+# =============================================================================
+# 7. Editores e IDE  —  configuración personal, no del proyecto.
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*~
+
+
+# =============================================================================
+# 8. Sistema operativo  —  archivos basura de macOS/Windows/Linux.
+# =============================================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
