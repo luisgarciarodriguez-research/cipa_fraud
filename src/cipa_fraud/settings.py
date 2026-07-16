@@ -68,6 +68,21 @@ SWEEP_N = (10_000, 50_000, "full")
 #: Equilibra fidelidad y tiempo (tabla de rendimiento de CIPA: N≤1M, d≤50 → ≤300 s).
 KNN_SUBSAMPLE_FULL = 50_000
 
+#: Umbral y tamaño de submuestreo de la métrica N1 (ECoL, dimensión D2) en CIPA.
+#: N1 es el **único** punto O(N²) *en memoria densa* del pipeline
+#: (``squareform(pdist(X))`` → matriz N×N). Con el default de CIPA
+#: (``n1_max_exact = 50_000``) los puntos de barrido ``50_000`` y ``"full"`` —que
+#: submuestrea a :data:`KNN_SUBSAMPLE_FULL` = 50 000— aterrizan **exactamente** en
+#: el umbral y corren N1 exacto: ~60 GB de pico → el OOM killer del SO mata el
+#: proceso. Fijar el umbral por debajo del punto de barrido más chico que hoy
+#: corre exacto fuerza a N1 a submuestrear (a :data:`N1_SUBSAMPLE`), acotando la
+#: matriz densa a N1_SUBSAMPLE² (≈0.8 GB a 10k). Las demás componentes de D2
+#: (F3, kDN) y D3/D4/D7 siguen usando la ruta k-NN O(N) sobre la N solicitada.
+#: A escala ``10_000`` N1 corre exacto (10 000 ≯ 10 000), idéntico al histórico.
+N1_MAX_EXACT = 10_000
+#: Tamaño del submuestreo estratificado de N1 cuando ``N > N1_MAX_EXACT``.
+N1_SUBSAMPLE = 10_000
+
 #: Umbral de faltantes del adaptador: las columnas con una fracción de valores
 #: ausentes mayor que esto se descartan (la fuente es inmutable; la imputación
 #: ocurre solo en memoria). Ver :mod:`cipa_fraud.adapt`.

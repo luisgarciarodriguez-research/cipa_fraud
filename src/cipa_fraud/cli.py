@@ -175,8 +175,9 @@ def adapt(dataset: str, layer: str = "features", n: str = "full") -> None:
 def run(dataset: str, layer: str = "both", sweep: str = "10000,50000,full") -> None:
     """Ejecuta CIPA sobre un dataset (capas × barrido de N). (F2/F3)
 
-    Correrá el pipeline para cada combinación de capa y tamaño del barrido,
-    persistiendo un JSON por corrida en ``results/``.
+    Corre el pipeline para cada combinación de capa y tamaño del barrido,
+    persistiendo un JSON por corrida en ``results/<id>/<layer>/<N>.json`` y
+    mostrando una línea de resumen (DS, banda, firma, tiempo) por combinación.
 
     Parameters
     ----------
@@ -188,7 +189,24 @@ def run(dataset: str, layer: str = "both", sweep: str = "10000,50000,full") -> N
         Lista separada por comas de puntos de escala (por defecto
         ``"10000,50000,full"``).
     """
-    _pending("F2/F3")
+    from cipa_fraud.run import run_one, summary_row
+
+    layers = list(settings.LAYERS) if layer == "both" else [layer]
+    points: list[str | int] = [
+        p if p == "full" else int(p) for p in (s.strip() for s in sweep.split(","))
+    ]
+    typer.echo(f"{'layer':9s} {'N':>7s} {'mode':10s} {'DS':>6s} {'band':9s} "
+               f"{'sig':4s} {'t(s)':>7s}")
+    for lyr in layers:
+        for n in points:
+            out = run_one(dataset, lyr, n)
+            r = summary_row(out)
+            n_lbl = "full" if r["n_target"] == "full" else f"{r['N']:,}"
+            typer.echo(
+                f"{r['layer']:9s} {n_lbl:>7s} {r['subsample_mode']:10s} "
+                f"{r['DS']:.3f}  {r['band']:9s} {r['signature']:4s} "
+                f"{r['runtime_s']:>7.2f}"
+            )
 
 
 @app.command("run-all")
