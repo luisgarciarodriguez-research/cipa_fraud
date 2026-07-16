@@ -131,9 +131,10 @@ def _pending(fase: str) -> None:
 def adapt(dataset: str, layer: str = "features", n: str = "full") -> None:
     """Inspecciona la matriz ``(X, y)`` construida para un dataset/capa. (F1)
 
-    Previsto para depurar el adaptado: mostrará forma de ``X``, número de clases,
-    razón de desbalanceo, columnas usadas/descartadas y fracción imputada, sin
-    ejecutar el pipeline CIPA.
+    Construye el par ``(X, y)`` con :func:`cipa_fraud.adapt.adapt` y muestra el
+    manifiesto: forma de ``X``, número de clases, razones de desbalanceo (original
+    y efectiva), modo de submuestreo y columnas descartadas/imputadas. No ejecuta
+    el pipeline CIPA.
 
     Parameters
     ----------
@@ -144,7 +145,30 @@ def adapt(dataset: str, layer: str = "features", n: str = "full") -> None:
     n : str, optional
         Punto de escala: un entero como texto o ``full`` (por defecto ``full``).
     """
-    _pending("F1")
+    from cipa_fraud.adapt import adapt as _adapt
+
+    res = _adapt(dataset, layer, n)
+    m = res.manifest
+    typer.secho(f"{dataset} / {layer} / n={m['n_target']}", fg=typer.colors.GREEN)
+    typer.echo(f"  X: {res.X.shape}  float64  finito=OK")
+    typer.echo(f"  y: 2 clases  minoría(fraude)={m['n_minority']:,}  "
+               f"mayoría={m['n_majority']:,}")
+    typer.echo(f"  submuestreo: {m['subsample_mode']}  "
+               f"(fuente={m['source_rows']:,} filas)")
+    typer.echo(f"  IR: {m['IR']:.1f}  →  IR_eff: {m['IR_eff']:.1f}  "
+               f"(tasa fraude efectiva {m['fraud_rate_eff'] * 100:.3f}%)")
+    typer.echo(f"  features: {m['n_features']}")
+    if m["dropped_categorical"]:
+        typer.echo(f"  categóricas descartadas ({len(m['dropped_categorical'])}): "
+                   f"{m['dropped_categorical'][:8]}"
+                   + (" …" if len(m["dropped_categorical"]) > 8 else ""))
+    if m["dropped_high_null"]:
+        typer.echo(f"  descartadas por nulos>50% ({len(m['dropped_high_null'])}): "
+                   f"{m['dropped_high_null'][:8]}"
+                   + (" …" if len(m["dropped_high_null"]) > 8 else ""))
+    if m["imputed"]:
+        typer.echo(f"  imputadas (mediana) ({len(m['imputed'])}): "
+                   f"{m['imputed'][:8]}" + (" …" if len(m["imputed"]) > 8 else ""))
 
 
 @app.command()

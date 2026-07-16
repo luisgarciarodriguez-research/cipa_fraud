@@ -256,10 +256,17 @@ marca aquí el avance.
   datos) y `registry.py` de los 8 datasets. *Verificado:* `cipa-fraud doctor`
   sale con exit 0 — rutas OK, `import cipa` OK, los 8 datasets presentes en
   ambas capas (clean/features). `cipa-fraud list-datasets` OK.
-- [ ] **F1 — Adaptador `(X, y)`.** Implementar `adapt.py` (§3) leyendo `_roles`/
-  `_features`. Prueba por dataset: cumple contrato CIPA (2 clases, sin NaN/Inf,
-  float64), reporta `N/d/IR/IR_eff/%imputado`. *Entregable:* `cipa-fraud adapt`
-  válido para los 8 × 2 capas.
+- [x] **F1 — Adaptador `(X, y)`. ✅ COMPLETA (2026-07-15).** `adapt.py` lee
+  `_roles`/`_features` y construye `(X, y)` cumpliendo el contrato CIPA. Reglas:
+  capa **clean** = `feature_cols` (categóricas → códigos ordinales); capa
+  **features** = numéricas + derivadas (`__te`/`__freq`/temporales/monto),
+  categóricas crudas descartadas (representación de modelado). Faltantes: descarta
+  cols >50% nulos e imputa mediana (solo afecta a `ieee_cis`). Escala: submuestreo
+  **asimétrico** (minoría ≤ N/2, preserva positivos) o **estratificado** (preserva
+  IR), registrando `mode`/`IR`/`IR_eff`. *Verificado:* los 16 combos (8×2 capas)
+  cumplen contrato (float64, finito, 2 clases); ruta de memoria acotada para los
+  gigantes (paysim 6.3M, saml_d 9.5M → 10k en <1s); `ruff` limpio. CLI:
+  `cipa-fraud adapt <ds> --layer <clean|features> --n <10000|50000|full>`.
 - [ ] **F2 — Smoke run.** Correr CIPA end-to-end sobre los más chicos (`fdb`,
   `banksim`) en las 3 configs de N; validar `CIPAResult` (DS, firma, acciones) y
   el formato de manifiesto/JSON. *Entregable:* resultados de 2 datasets + revisión
