@@ -21,13 +21,16 @@
 
 
 # =============================================================================
-# 2. Resultados por corrida  —  results/<id>/<layer>/<N>.json son salidas
-#    regenerables por CLI (`cipa-fraud run-all`). El consolidado tidy
-#    (results/all_results.parquet) y los reportes SÍ se versionan.
-#    Se conserva la carpeta con .gitkeep.
+# 2. Salidas regenerables por CLI  —  la fuente de verdad es el código (+ PLAN.md).
+#    TODO lo de results/ y reports/ son artefactos derivados, reconstruibles con
+#    `cipa-fraud run-all/compare/report/writeup`; se ignoran por completo para no
+#    meter churn (blobs binarios + timestamps embebidos) al historial.
+#    Se conservan las carpetas con .gitkeep.
 # =============================================================================
-/results/**/*.json
+/results/**
+/reports/**
 !/results/.gitkeep
+!/reports/.gitkeep
 
 
 # =============================================================================

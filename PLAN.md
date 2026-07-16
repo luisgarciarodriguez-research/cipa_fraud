@@ -267,27 +267,67 @@ marca aquí el avance.
   cumplen contrato (float64, finito, 2 clases); ruta de memoria acotada para los
   gigantes (paysim 6.3M, saml_d 9.5M → 10k en <1s); `ruff` limpio. CLI:
   `cipa-fraud adapt <ds> --layer <clean|features> --n <10000|50000|full>`.
-- [ ] **F2 — Smoke run.** Correr CIPA end-to-end sobre los más chicos (`fdb`,
-  `banksim`) en las 3 configs de N; validar `CIPAResult` (DS, firma, acciones) y
-  el formato de manifiesto/JSON. *Entregable:* resultados de 2 datasets + revisión
-  de tiempos.
-- [ ] **F3 — Ejecución completa.** `run-all`: 8 datasets × {clean, features} ×
-  {10k, 50k, full}. Persistir JSON por corrida + `all_results.parquet`. Vigilar
-  tiempos de `ieee_cis`/`saml_d`/`paysim` (alto N/d). *Entregable:* matriz de
-  resultados completa + log de desviaciones.
-- [ ] **F4 — Consistencia (RQ8).** Comparar `ulb_cc`/`paysim`/`ieee_cis` (config
-  Tier-2 a 10k) contra CIPA v1.1.0 (banda/firma; ±0.10 en DS si aplica). Documentar
-  el efecto limpieza+features vs. carga cruda. *Entregable:* `reports/consistency/`.
-- [ ] **F5 — Análisis comparativo (RQ1–RQ7).** Tablas consolidadas, ranking DS,
-  heatmap D1–D7, radar por dataset, distribución de firmas, clustering en el
-  espacio de 7-D, ubicación frente al benchmark multi-dominio, real vs. sintético,
-  delta E-FEAT (clean↔features), sensibilidad E-SCALE, correlación DS↔proxy (RQ7).
-  *Entregable:* `src/cipa_fraud/compare/` + figuras.
-- [ ] **F6 — Reporte.** Informe comparativo HTML/MD (panorama + ficha por dataset +
-  hallazgos por RQ), `reproducibility.json` (versiones, hashes, semillas, params).
-  *Entregable:* `reports/comparative/`.
-- [ ] **F7 (opcional) — Write-up.** Materiales para artículo/capítulo de tesis:
-  tabla estilo "Table 2" extendida al dominio fraude, figuras finales, narrativa.
+- [x] **F2 — Smoke run. ✅ COMPLETA (2026-07-16).** `run.py` (`run_one`,
+  `summary_row`, `output_path`) + comando `cipa-fraud run` corriendo CIPA
+  end-to-end sobre `fdb` en las 3 configs de N; `CIPAResult` (DS, firma, acciones)
+  y manifiesto/JSON validados. *Corrección de memoria:* la métrica N1 (D2) hace
+  `squareform(pdist(X))` (único punto O(N²) en memoria densa); con el default de
+  CIPA (`n1_max_exact=50_000`) los puntos 50k/full aterrizaban en el umbral exacto
+  → pico ~108 GB → OOM killer. Se acota vía `settings.N1_MAX_EXACT=10_000`
+  (parámetro del pipeline, sin tocar CIPA) → pico ~4.6 GB. *Verificado:* barrido
+  fdb desde cero, exit 0, sin OOM.
+- [x] **F3 — Ejecución completa. ✅ COMPLETA (2026-07-16).** `run-all` (reanudable:
+  omite JSON existentes salvo `--force`; aísla fallos por corrida como
+  desviaciones) corrió los 8 datasets × {clean, features} × {10k, 50k, full} =
+  **48/48 corridas, 0 fallos**, consolidando `results/all_results.parquet` (tidy,
+  1 fila/corrida, sin nulos). Ejecutado en 3 etapas (10k+50k → full moderados →
+  full gigantes) para aislar las corridas lentas. Pico de RSS 7.4 GB (memoria
+  acotada en todos los N). Tiempos altos confirmados en alta-N/d: `ieee_cis`
+  features full 631 s, `saml_d` features full 915 s. *Entregable:* matriz completa
+  + `all_results.parquet`. CLI: `cipa-fraud run-all [--datasets …] [--sweep …]
+  [--force]`.
+- [x] **F4 — Consistencia (RQ8). ✅ COMPLETA (2026-07-16).** `consistency.py`
+  (`check`) contrasta `ulb_cc`/`paysim`/`ieee_cis` a Tier-2 (N=10k, capas
+  clean+features, reusando los JSON de F3) contra CIPA v1.1.0. **Resultado: banda
+  6/6 y firma 6/6 coinciden** (el diagnóstico cualitativo se reproduce por
+  completo, incluso con el cambio v1.1.0→v1.2.0). DS dentro de ±0.10 en 3/6:
+  `ieee_cis` casi invariante (ΔDS ≈ 0), `ulb_cc`/`paysim` clean suben ~+0.11 (el
+  preprocesamiento + features eleva la dificultad frente a la carga cruda genérica;
+  |ΔDS| máx 0.1134). CLI: `cipa-fraud consistency`. *Entregable:*
+  `reports/consistency/consistency.{json,md}`.
+- [x] **F5 — Análisis comparativo (RQ1–RQ7). ✅ COMPLETA (2026-07-16).** Paquete
+  `compare/` (`data`, `analysis`, `figures`, `build`) + comando `cipa-fraud
+  compare` → `reports/comparative/` (JSON, Markdown, 7 tablas CSV, 6 figuras PNG;
+  corte canónico features/full). **Hallazgos:** RQ1 `fdb` el más difícil (DS 0.529,
+  única banda High) y `banksim` el más fácil (0.262), 7/8 Moderate. RQ2 la **firma
+  V (Compound) domina 7/8** (confirma la hipótesis del benchmark); dimensiones más
+  intensas D1 (desbalance) y D4 (fragmentación). RQ3 clustering interno débil
+  (silueta 0.28) — el fraude es heterogéneo en 7-D. RQ4 medias por origen/dominio
+  (descriptivo, n pequeño). RQ5 (E-FEAT) **las features bajan el DS en 8/8**
+  (ΔDS medio −0.028), sin cambios de firma; reducen sobre todo D3/D6. RQ6 (E-SCALE)
+  D1 la dimensión más sensible al submuestreo (vía IR_eff); banda estable en 7/16
+  configs. RQ7 el **proxy heurístico NO correlaciona** con el DS real (Spearman
+  ρ=0.19, p=0.65; `fdb` es el caso extremo: proxy≈0 pero DS máximo). Figuras
+  CVD-safe (Okabe-Ito / cividis / PuOr). RQ3-panorama vs. los 13 del benchmark:
+  pendiente por falta de sus perfiles 7-D como dato (documentado). *Entregable:*
+  `src/cipa_fraud/compare/` + `reports/comparative/`.
+- [x] **F6 — Reporte. ✅ COMPLETA (2026-07-16).** Paquete `report/`
+  (`reproducibility`, `build`) + comando `cipa-fraud report`. Ensambla el informe
+  final en `reports/comparative/report.md` y `report.html` (autocontenido: CSS
+  embebido + 6 figuras en base64; panorama, ranking RQ1, perfiles/firmas RQ2,
+  hallazgos RQ1–RQ7, consistencia RQ8, ficha por dataset con perfil D1–D7 y
+  recomendaciones de acción de CIPA, y bloque de reproducibilidad). Genera
+  `reports/reproducibility.json` (versiones de CIPA y deps, semilla, params de
+  escala/pesos, **SHA-256 de los 16 Parquet de entrada** —la fuente no se copia—, y
+  resumen de las 48 corridas). *Entregable:* `reports/comparative/` +
+  `reports/reproducibility.json`.
+- [x] **F7 (opcional) — Write-up. ✅ COMPLETA (2026-07-16).** `report/writeup.py` +
+  comando `cipa-fraud writeup` → `reports/writeup/`: **Table 2** (perfil CIPA de los
+  8 datasets en features/full: N, IR, D1–D7, DS, banda, firma) en LaTeX
+  (`booktabs`, `table2.tex`) y Markdown (`table2.md`), y una **narrativa** de
+  resultados/discusión (`writeup.md`, español) con las cifras computadas en vivo
+  (resumen, RQ1–RQ8, discusión, limitaciones), referenciando las figuras CVD-safe
+  de F5. *Entregable:* `reports/writeup/`.
 
 ---
 
