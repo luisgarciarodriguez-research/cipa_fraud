@@ -113,8 +113,9 @@ def load_proxy() -> pl.DataFrame:
         Columnas ``dataset_id`` y ``proxy`` (índice heurístico 0–1, mayor = más
         difícil). Vacío si el CSV de origen no está disponible.
     """
+    empty = pl.DataFrame(schema={"dataset_id": pl.String, "proxy": pl.Float64})
     if not PROXY_CSV.exists():
-        return pl.DataFrame({"dataset_id": [], "proxy": []})
+        return empty  # tipado: el join de RQ7 requiere dataset_id String
     ids = set(registry.all_ids())
     df = pl.read_csv(PROXY_CSV)
     return (

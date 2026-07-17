@@ -33,6 +33,13 @@ dev = [
 [project.scripts]
 cipa-fraud = "cipa_fraud.cli:app"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "needs_data: requiere los Parquet procesados del proyecto comparativo (se omite si faltan)",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

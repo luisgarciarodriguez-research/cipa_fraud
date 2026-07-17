@@ -341,7 +341,9 @@ def adapt(
     if keep is not None:
         enc = (
             enc.with_row_index("__ridx")
-            .filter(pl.col("__ridx").is_in(pl.Series(keep, dtype=pl.UInt32)))
+            # implode: pertenencia a la lista de índices sin la ambigüedad
+            # deprecada de is_in con un Series del mismo dtype (polars #22149).
+            .filter(pl.col("__ridx").is_in(pl.Series(keep, dtype=pl.UInt32).implode()))
             .drop("__ridx")
         )
     xdf = enc.collect()
